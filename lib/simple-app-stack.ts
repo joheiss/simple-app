@@ -43,11 +43,5 @@ export class SimpleAppStack extends Stack {
       exportName: "TestS3Bucket1Export",
     });
 
-    // The code that defines your stack goes here
-
-    // example resource
-    // const queue = new sqs.Queue(this, 'SimpleAppQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
   }
 }
