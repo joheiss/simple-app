@@ -21,7 +21,7 @@ export class SimpleAppStack extends Stack {
     });
 
     // add files to S3 bucket
-    new BucketDeployment(this, "DeployWebsite", {
+    new BucketDeployment(this, "DeployPhotos", {
       sources: [Source.asset(path.join(__dirname, "..", "assets", "images"))],
       destinationBucket: bucket,
       // destinationKeyPrefix: 'web/static' // optional prefix in destination bucket
