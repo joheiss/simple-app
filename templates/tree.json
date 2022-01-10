@@ -1,0 +1,97 @@
+{
+  "version": "tree-0.1",
+  "tree": {
+    "id": "App",
+    "path": "",
+    "children": {
+      "Tree": {
+        "id": "Tree",
+        "path": "Tree",
+        "constructInfo": {
+          "fqn": "constructs.Construct",
+          "version": "10.0.29"
+        }
+      },
+      "SimpleAppStack": {
+        "id": "SimpleAppStack",
+        "path": "SimpleAppStack",
+        "children": {
+          "TestS3Bucket1": {
+            "id": "TestS3Bucket1",
+            "path": "SimpleAppStack/TestS3Bucket1",
+            "children": {
+              "Notifications": {
+                "id": "Notifications",
+                "path": "SimpleAppStack/TestS3Bucket1/Notifications",
+                "constructInfo": {
+                  "fqn": "constructs.Construct",
+                  "version": "10.0.29"
+                }
+              },
+              "Resource": {
+                "id": "Resource",
+                "path": "SimpleAppStack/TestS3Bucket1/Resource",
+                "attributes": {
+                  "aws:cdk:cloudformation:type": "AWS::S3::Bucket",
+                  "aws:cdk:cloudformation:props": {
+                    "bucketName": "com.jovisco.lab.cdktest.1641746041545"
+                  }
+                },
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.aws_s3.CfnBucket",
+                  "version": "2.4.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.aws_s3.Bucket",
+              "version": "2.4.0"
+            }
+          },
+          "TestS3Bucket1Output": {
+            "id": "TestS3Bucket1Output",
+            "path": "SimpleAppStack/TestS3Bucket1Output",
+            "constructInfo": {
+              "fqn": "aws-cdk-lib.CfnOutput",
+              "version": "2.4.0"
+            }
+          },
+          "CDKMetadata": {
+            "id": "CDKMetadata",
+            "path": "SimpleAppStack/CDKMetadata",
+            "children": {
+              "Default": {
+                "id": "Default",
+                "path": "SimpleAppStack/CDKMetadata/Default",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.CfnResource",
+                  "version": "2.4.0"
+                }
+              },
+              "Condition": {
+                "id": "Condition",
+                "path": "SimpleAppStack/CDKMetadata/Condition",
+                "constructInfo": {
+                  "fqn": "aws-cdk-lib.CfnCondition",
+                  "version": "2.4.0"
+                }
+              }
+            },
+            "constructInfo": {
+              "fqn": "constructs.Construct",
+              "version": "10.0.29"
+            }
+          }
+        },
+        "constructInfo": {
+          "fqn": "aws-cdk-lib.Stack",
+          "version": "2.4.0"
+        }
+      }
+    },
+    "constructInfo": {
+      "fqn": "aws-cdk-lib.App",
+      "version": "2.4.0"
+    }
+  }
+}
