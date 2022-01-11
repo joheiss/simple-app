@@ -5,7 +5,13 @@ import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
-
+import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import {
+  CorsHttpMethod,
+  HttpApi,
+  HttpMethod,
+} from "@aws-cdk/aws-apigatewayv2-alpha";
+import { HttpLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 export class SimpleAppStack extends Stack {
@@ -24,7 +30,6 @@ export class SimpleAppStack extends Stack {
     new BucketDeployment(this, "DeployPhotos", {
       sources: [Source.asset(path.join(__dirname, "..", "assets", "images"))],
       destinationBucket: bucket,
-      // destinationKeyPrefix: 'web/static' // optional prefix in destination bucket
     });
 
     // create lambda function
@@ -37,11 +42,51 @@ export class SimpleAppStack extends Stack {
       },
     });
 
+    // create policy to allow lambda to access S3 and generate signed urls
+    const bucketContainerPermission = new PolicyStatement({
+      resources: [bucket.bucketArn, `${bucket.bucketArn}/*`],
+      actions: ["s3:ListBucket", "s3:GetObject", "s3:PutObject"],
+    });
+
+    // add role to Lambda function
+    lambdaFunction.addToRolePolicy(bucketContainerPermission);
+
+    // create API Gateway
+    const httpApi = new HttpApi(this, "TestHttpApi", {
+      corsPreflight: {
+        allowOrigins: ["*"],
+        allowMethods: [CorsHttpMethod.GET],
+      },
+      apiName: "photo-api",
+      createDefaultStage: true,
+    });
+
+    // create Lambda Proxy Integration
+    const lambdaIntegration = new HttpLambdaIntegration(
+      "TestHttpLambdaIntegration",
+      lambdaFunction
+    );
+
+    // const lambdaProxyIntegration = new HttpLambdaIntegration(this, 'TestLambdaHttpIntegration', {
+    //   handler: lambdaFunction,
+    // });
+
+    // add routes to API Gateway
+    httpApi.addRoutes({
+      path: "/getAllPhotos",
+      methods: [HttpMethod.GET],
+      integration: lambdaIntegration,
+    });
+
     // configure CFN output
     new CfnOutput(this, "TestS3Bucket1Output", {
       value: bucket.bucketName,
       exportName: "TestS3Bucket1Export",
     });
 
+    new CfnOutput(this, "TestApiEndpoint1Output", {
+      value: httpApi.url!,
+      exportName: "TestApiEndpoint1Export",
+    });
   }
 }
