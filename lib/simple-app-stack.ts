@@ -6,6 +6,7 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
+import { CloudFrontWebDistribution } from "aws-cdk-lib/aws-cloudfront";
 import {
   CorsHttpMethod,
   HttpApi,
@@ -18,8 +19,7 @@ export class SimpleAppStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // create new S3 bucket
-    const timestamp = new Date().getTime().toString();
+    // create new S3 bucket for photos
     const bucketName = `com.jovisco.lab.cdktest1`;
     const bucket = new Bucket(this, "TestS3Bucket1", {
       bucketName: `com.jovisco.lab.cdktest1`,
@@ -30,6 +30,33 @@ export class SimpleAppStack extends Stack {
     new BucketDeployment(this, "DeployPhotos", {
       sources: [Source.asset(path.join(__dirname, "..", "assets", "images"))],
       destinationBucket: bucket,
+    });
+
+    // create new S3 bucket for website
+    const websiteBucket = new Bucket(this, 'TestWebsiteBucket1', {
+      bucketName: `com.jovisco.lab.cdktest.website`,
+      websiteIndexDocument: 'index.html',
+      publicReadAccess: true,
+    });
+
+    // add website files to bucket
+    new BucketDeployment(this, 'DeployWebsite', {
+      sources: [Source.asset(path.join(__dirname, '..', 'frontend', 'build'))],
+      destinationBucket: websiteBucket,
+    });
+
+    // create new cloudfront distribution
+    const cloudfrontDist = new CloudFrontWebDistribution(this, 'TestWebsiteDistribution', {
+      originConfigs: [
+        {
+          s3OriginSource: {
+            s3BucketSource: websiteBucket,
+          },
+          behaviors: [
+            { isDefaultBehavior: true },
+          ],
+        }
+      ],
     });
 
     // create lambda function
@@ -67,10 +94,6 @@ export class SimpleAppStack extends Stack {
       lambdaFunction
     );
 
-    // const lambdaProxyIntegration = new HttpLambdaIntegration(this, 'TestLambdaHttpIntegration', {
-    //   handler: lambdaFunction,
-    // });
-
     // add routes to API Gateway
     httpApi.addRoutes({
       path: "/getAllPhotos",
@@ -82,6 +105,16 @@ export class SimpleAppStack extends Stack {
     new CfnOutput(this, "TestS3Bucket1Output", {
       value: bucket.bucketName,
       exportName: "TestS3Bucket1Export",
+    });
+
+    new CfnOutput(this, "TestWebsiteBucket1Output", {
+      value: websiteBucket.bucketName,
+      exportName: "TestWebsiteBucket1Export",
+    });
+
+    new CfnOutput(this, "TestWebsiteDist1Output", {
+      value: cloudfrontDist.distributionDomainName,
+      exportName: "TestWebsiteDist1Export",
     });
 
     new CfnOutput(this, "TestApiEndpoint1Output", {
