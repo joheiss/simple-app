@@ -39,12 +39,6 @@ export class SimpleAppStack extends Stack {
       publicReadAccess: true,
     });
 
-    // add website files to bucket
-    new BucketDeployment(this, 'DeployWebsite', {
-      sources: [Source.asset(path.join(__dirname, '..', 'frontend', 'build'))],
-      destinationBucket: websiteBucket,
-    });
-
     // create new cloudfront distribution
     const cloudfrontDist = new CloudFrontWebDistribution(this, 'TestWebsiteDistribution', {
       originConfigs: [
@@ -58,6 +52,14 @@ export class SimpleAppStack extends Stack {
         }
       ],
     });
+
+    // add website files to bucket
+    new BucketDeployment(this, 'DeployWebsite', {
+      sources: [Source.asset(path.join(__dirname, '..', 'frontend', 'build'))],
+      destinationBucket: websiteBucket,
+      distribution: cloudfrontDist,
+    });
+
 
     // create lambda function
     const lambdaFunction = new NodejsFunction(this, "TestLambdaFunction1", {
