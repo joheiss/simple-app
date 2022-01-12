@@ -14,3 +14,5 @@ cdk deploy
 # display cloudformation differences
 cdk diff
 
+# delete cloudformation stack
+cdk destroy
