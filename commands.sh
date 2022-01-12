@@ -11,8 +11,14 @@ cdk list
 # deploy current stack
 cdk deploy
 
+# deploy all stacks - if there are more
+cdk deploy "*"
+
 # display cloudformation differences
 cdk diff
 
 # delete cloudformation stack
 cdk destroy
+
+# delete all stacks - if there are more
+cdk destroy "*"

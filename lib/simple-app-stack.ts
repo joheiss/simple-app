@@ -15,15 +15,21 @@ import {
 import { HttpLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
+interface SimpleAppStackProps extends StackProps {
+  envName?: string;
+}
 export class SimpleAppStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props?: SimpleAppStackProps) {
     super(scope, id, props);
 
     // create new S3 bucket for photos
-    const bucketName = `com.jovisco.lab.cdktest1`;
+    const bucketName = `com.jovisco.lab.cdktest1.${props?.envName}`;
     const bucket = new Bucket(this, "TestS3Bucket1", {
-      bucketName: `com.jovisco.lab.cdktest1`,
-      encryption: BucketEncryption.UNENCRYPTED,
+      bucketName: `com.jovisco.lab.cdktest1.${props?.envName}`,
+      encryption:
+        props?.envName === "prod"
+          ? BucketEncryption.S3_MANAGED
+          : BucketEncryption.UNENCRYPTED,
     });
 
     // add files to S3 bucket
@@ -33,33 +39,34 @@ export class SimpleAppStack extends Stack {
     });
 
     // create new S3 bucket for website
-    const websiteBucket = new Bucket(this, 'TestWebsiteBucket1', {
-      bucketName: `com.jovisco.lab.cdktest.website`,
-      websiteIndexDocument: 'index.html',
+    const websiteBucket = new Bucket(this, "TestWebsiteBucket1", {
+      bucketName: `com.jovisco.lab.cdktest.website.${props?.envName}`,
+      websiteIndexDocument: "index.html",
       publicReadAccess: true,
     });
 
     // create new cloudfront distribution
-    const cloudfrontDist = new CloudFrontWebDistribution(this, 'TestWebsiteDistribution', {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: websiteBucket,
+    const cloudfrontDist = new CloudFrontWebDistribution(
+      this,
+      "TestWebsiteDistribution",
+      {
+        originConfigs: [
+          {
+            s3OriginSource: {
+              s3BucketSource: websiteBucket,
+            },
+            behaviors: [{ isDefaultBehavior: true }],
           },
-          behaviors: [
-            { isDefaultBehavior: true },
-          ],
-        }
-      ],
-    });
+        ],
+      }
+    );
 
     // add website files to bucket
-    new BucketDeployment(this, 'DeployWebsite', {
-      sources: [Source.asset(path.join(__dirname, '..', 'frontend', 'build'))],
+    new BucketDeployment(this, "DeployWebsite", {
+      sources: [Source.asset(path.join(__dirname, "..", "frontend", "build"))],
       destinationBucket: websiteBucket,
       distribution: cloudfrontDist,
     });
-
 
     // create lambda function
     const lambdaFunction = new NodejsFunction(this, "TestLambdaFunction1", {
@@ -104,24 +111,24 @@ export class SimpleAppStack extends Stack {
     });
 
     // configure CFN output
-    new CfnOutput(this, "TestS3Bucket1Output", {
+    new CfnOutput(this, `TestS3Bucket1Output-${props?.envName}`, {
       value: bucket.bucketName,
-      exportName: "TestS3Bucket1Export",
+      exportName: `TestS3Bucket1Export-${props?.envName}`,
     });
 
-    new CfnOutput(this, "TestWebsiteBucket1Output", {
+    new CfnOutput(this, `TestWebsiteBucket1Output-${props?.envName}`, {
       value: websiteBucket.bucketName,
-      exportName: "TestWebsiteBucket1Export",
+      exportName: `TestWebsiteBucket1Export-${props?.envName}`,
     });
 
-    new CfnOutput(this, "TestWebsiteDist1Output", {
+    new CfnOutput(this, `TestWebsiteDist1Output-${props?.envName}`, {
       value: cloudfrontDist.distributionDomainName,
-      exportName: "TestWebsiteDist1Export",
+      exportName: `TestWebsiteDist1Export-${props?.envName}`,
     });
 
-    new CfnOutput(this, "TestApiEndpoint1Output", {
+    new CfnOutput(this, `TestApiEndpoint1Output-${props?.envName}`, {
       value: httpApi.url!,
-      exportName: "TestApiEndpoint1Export",
+      exportName: `TestApiEndpoint1Export-${props?.envName}`,
     });
   }
 }
