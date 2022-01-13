@@ -22,3 +22,9 @@ cdk destroy
 
 # delete all stacks - if there are more
 cdk destroy "*"
+
+# empty S3 bucket
+aws s3 rm s3://com.jovisco.lab.cdktest1.dev --recursive
+
+# delete S3 bucket
+aws s3 rb s3://com.jovisco.lab.cdktest1.dev --force

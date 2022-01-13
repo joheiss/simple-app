@@ -4,7 +4,7 @@ import * as cdk from "aws-cdk-lib";
 import { SimpleAppStack } from "../lib/simple-app-stack";
 
 const app = new cdk.App();
-new SimpleAppStack(app, "SimpleAppStack-dev", {
+new SimpleAppStack(app, "c", {
   env: { region: "eu-central-1" },
   envName: "dev",
   /* If you don't specify 'env', this stack will be environment-agnostic.
