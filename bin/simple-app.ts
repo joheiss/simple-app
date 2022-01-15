@@ -2,11 +2,27 @@
 import "source-map-support/register";
 import * as cdk from "aws-cdk-lib";
 import { SimpleAppStack } from "../lib/simple-app-stack";
+import { SimpleAppDnsStack } from "../lib/simple-app-dns-stack";
+
+const domainNameApex = "lab.jovisco.net";
 
 const app = new cdk.App();
-new SimpleAppStack(app, "c", {
-  env: { region: "eu-central-1" },
+
+const { hostedZone, certificate } = new SimpleAppDnsStack(
+  app,
+  "SimpleAppDnsStack-dev",
+  {
+    env: { region: "us-east-1" },
+    envName: "dev",
+    dnsName: domainNameApex,
+  }
+);
+
+new SimpleAppStack(app, "SimpleAppStack-dev", {
+  env: { region: "us-east-1" },
   envName: "dev",
+  hostedZone,
+  certificate,
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */
@@ -22,6 +38,8 @@ new SimpleAppStack(app, "c", {
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
 new SimpleAppStack(app, "SimpleAppStack-test", {
-  env: { region: "eu-central-1" },
+  env: { region: "us-east-1" },
   envName: "test",
+  hostedZone,
+  certificate,
 });

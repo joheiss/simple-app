@@ -1,4 +1,10 @@
-import { CfnOutput, Stack, StackProps } from "aws-cdk-lib";
+import {
+  aws_cloudfront_origins,
+  CfnOutput,
+  Fn,
+  Stack,
+  StackProps,
+} from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
@@ -6,16 +12,30 @@ import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
 import * as path from "path";
 import { PolicyStatement } from "aws-cdk-lib/aws-iam";
-import { CloudFrontWebDistribution } from "aws-cdk-lib/aws-cloudfront";
+import {
+  CloudFrontWebDistribution,
+  Distribution,
+  OriginSslPolicy,
+} from "aws-cdk-lib/aws-cloudfront";
 import {
   CorsHttpMethod,
   HttpApi,
   HttpMethod,
 } from "@aws-cdk/aws-apigatewayv2-alpha";
 import { HttpLambdaIntegration } from "@aws-cdk/aws-apigatewayv2-integrations-alpha";
+import {
+  ARecord,
+  IPublicHostedZone,
+  RecordTarget,
+} from "aws-cdk-lib/aws-route53";
+import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
+import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 
 export interface ISimpleAppStackProps extends StackProps {
   envName?: string;
+  dnsName?: string;
+  hostedZone?: IPublicHostedZone;
+  certificate?: ICertificate;
 }
 
 export class SimpleAppStack extends Stack {
@@ -96,37 +116,36 @@ export class SimpleAppStack extends Stack {
     });
 
     // create new cloudfront distribution
-    const cloudfrontDist = new CloudFrontWebDistribution(
-      this,
-      "TestWebsiteDistribution",
-      {
-        originConfigs: [
-          {
-            s3OriginSource: {
-              s3BucketSource: bucket,
-            },
-            behaviors: [{ isDefaultBehavior: true }],
-          },
-        ],
-      }
-    );
+    const distribution = new Distribution(this, "TestWebsiteDistribution", {
+      defaultBehavior: {
+        origin: new aws_cloudfront_origins.S3Origin(bucket, {}),
+      },
+      domainNames: [props?.dnsName!],
+      certificate: props?.certificate!,
+    });
+
+    // create Route53 A record
+    const aRecord = new ARecord(this, "TestARecord", {
+      zone: props?.hostedZone!,
+      target: RecordTarget.fromAlias(new CloudFrontTarget(distribution)),
+    });
 
     // add website files to bucket
     new BucketDeployment(this, "DeployWebsite", {
       sources: [Source.asset(path.join(__dirname, "..", "frontend", "build"))],
       destinationBucket: bucket,
-      distribution: cloudfrontDist,
+      distribution,
     });
 
     // prepare Outputs
-    new CfnOutput(this, `TestWebsiteBucket1Output-${props?.envName}`, {
+    new CfnOutput(this, `TestWebsiteBucketOutput-${props?.envName}`, {
       value: bucket.bucketName,
-      exportName: `TestWebsiteBucket1Export-${props?.envName}`,
+      exportName: `TestWebsiteBucketExport-${props?.envName}`,
     });
 
-    new CfnOutput(this, `TestWebsiteDist1Output-${props?.envName}`, {
-      value: cloudfrontDist.distributionDomainName,
-      exportName: `TestWebsiteDist1Export-${props?.envName}`,
+    new CfnOutput(this, `TestWebsiteDistributionOutput-${props?.envName}`, {
+      value: distribution.distributionDomainName,
+      exportName: `TestWebsiteDistributionExport-${props?.envName}`,
     });
 
     return bucket;
