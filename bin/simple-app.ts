@@ -12,14 +12,20 @@ const { hostedZone, certificate } = new SimpleAppDnsStack(
   app,
   "SimpleAppDnsStack-dev",
   {
-    env: { region: "us-east-1" },
+    env: {
+      account: process.env.CDK_DEFAULT_ACCOUNT,
+      region: "us-east-1",
+    },
     envName: "dev",
     dnsName: domainNameApex,
   }
 );
 
 new SimpleAppStack(app, "SimpleAppStack-dev", {
-  env: { region: "us-east-1" },
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: "us-east-1",
+  },
   envName: "dev",
   hostedZone,
   certificate,
@@ -38,7 +44,10 @@ new SimpleAppStack(app, "SimpleAppStack-dev", {
   /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
 });
 new SimpleAppStack(app, "SimpleAppStack-test", {
-  env: { region: "us-east-1" },
+  env: {
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: "us-east-1",
+  },
   envName: "test",
   hostedZone,
   certificate,

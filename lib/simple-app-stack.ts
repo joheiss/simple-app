@@ -30,6 +30,7 @@ import {
 } from "aws-cdk-lib/aws-route53";
 import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
+import { S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
 
 export interface ISimpleAppStackProps extends StackProps {
   envName?: string;
@@ -118,7 +119,7 @@ export class SimpleAppStack extends Stack {
     // create new cloudfront distribution
     const distribution = new Distribution(this, "TestWebsiteDistribution", {
       defaultBehavior: {
-        origin: new aws_cloudfront_origins.S3Origin(bucket, {}),
+        origin: new S3Origin(bucket, {}),
       },
       domainNames: [props?.dnsName!],
       certificate: props?.certificate!,
