@@ -6,7 +6,7 @@ import {
   StackProps,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Bucket, BucketEncryption } from "aws-cdk-lib/aws-s3";
+import { Bucket, BucketEncryption, IBucket } from "aws-cdk-lib/aws-s3";
 import { BucketDeployment, Source } from "aws-cdk-lib/aws-s3-deployment";
 import { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { Runtime } from "aws-cdk-lib/aws-lambda";
@@ -31,6 +31,7 @@ import {
 import { ICertificate } from "aws-cdk-lib/aws-certificatemanager";
 import { CloudFrontTarget } from "aws-cdk-lib/aws-route53-targets";
 import { S3Origin } from "aws-cdk-lib/aws-cloudfront-origins";
+import { S3BucketWithDeploy } from "./s3-bucket-with-deploy";
 
 export interface ISimpleAppStackProps extends StackProps {
   envName?: string;
@@ -55,7 +56,7 @@ export class SimpleAppStack extends Stack {
 
   private build_rest_api(
     props: ISimpleAppStackProps | undefined,
-    photoBucket: Bucket
+    photoBucket: IBucket
   ) {
     // create lambda function
     const lambdaFunction = new NodejsFunction(this, "TestLambdaFunction1", {
@@ -152,26 +153,19 @@ export class SimpleAppStack extends Stack {
     return bucket;
   }
 
-  private build_photo_bucket(props: ISimpleAppStackProps | undefined): Bucket {
-    // create new S3 bucket for photos
-    const bucketName = `com.jovisco.lab.cdktest1.${props?.envName}`;
-    const bucket = new Bucket(this, "TestS3Bucket1", {
+  private build_photo_bucket(props: ISimpleAppStackProps | undefined): IBucket {
+    const { bucket } = new S3BucketWithDeploy(this, "PhotoBucket", {
       bucketName: `com.jovisco.lab.cdktest1.${props?.envName}`,
+      deployFrom: ["..", "assets", "images"],
       encryption:
         props?.envName === "prod"
           ? BucketEncryption.S3_MANAGED
           : BucketEncryption.UNENCRYPTED,
     });
 
-    // add files to S3 bucket
-    new BucketDeployment(this, "DeployPhotos", {
-      sources: [Source.asset(path.join(__dirname, "..", "assets", "images"))],
-      destinationBucket: bucket,
-    });
-
-    new CfnOutput(this, `TestS3Bucket1Output-${props?.envName}`, {
+    new CfnOutput(this, `PhotoBucketOutput-${props?.envName}`, {
       value: bucket.bucketName,
-      exportName: `TestS3Bucket1Export-${props?.envName}`,
+      exportName: `PhotoBucketExport-${props?.envName}`,
     });
 
     return bucket;
